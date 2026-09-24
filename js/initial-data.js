@@ -1,5 +1,5 @@
 // 第一次使用時，由管理頁寫進資料庫的初始資料（115 學年度上學期總課表）
-import { expandLabel } from './shared.js?v=20260924c';
+import { expandLabel } from './shared.js?v=20260924d';
 
 export const INITIAL_TERM = { name: '115學年度上學期', start: '2026-08-01', end: '2027-01-31' };
 export const INITIAL_ROOMS = ['想法放大室', '共讀站', '多媒體教室', '電腦教室', '山野教室']; // 依使用率排序

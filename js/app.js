@@ -1,11 +1,11 @@
 // 老師用的預約網頁
-import { db } from './firebase.js?v=20260924c';
+import { db } from './firebase.js?v=20260924d';
 import {
   doc, getDoc, collection, query, where, onSnapshot, getDocs, writeBatch, serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import {
   ymd, addDays, wd, DAYC, md, mdw, mondayOf, today, esc, termOf, slotId, slotsSummary, bookMessage, cancelMessage,
-} from './shared.js?v=20260924c';
+} from './shared.js?v=20260924d';
 
 // ====== 資料 ======
 const cfg = { rooms: [], periods: 7, terms: [] };
@@ -217,17 +217,24 @@ $('grid').onclick = e => {
 $('selClear').onclick = () => { S.sel.clear(); render(); };
 $('selGo').onclick = openBook;
 
+const KLASSES = ['一甲', '二甲', '三甲', '四甲', '五甲', '六甲'];
+
 function openBook() {
   const slots = [...S.sel.values()];
+  const lastKlass = getPref(KLASS_KEY), otherKlass = !!lastKlass && !KLASSES.includes(lastKlass);
   dlgBody.innerHTML = `
     <h2>預約 ${slots.length} 節</h2>
     <ul class="slots">${slotsSummary(slots).split('\n').map(l => '<li>' + esc(l) + '</li>').join('')}</ul>
     <form id="f">
       <label for="fn">預約老師</label>
       <input id="fn" required maxlength="20" autocomplete="name" placeholder="例如：王小明" value="${esc(getPref(NAME_KEY))}">
-      <label for="fk">使用班級</label>
-      <input id="fk" required maxlength="10" list="klasses" placeholder="例如：五甲" value="${esc(getPref(KLASS_KEY))}">
-      <datalist id="klasses">${['一甲','二甲','三甲','四甲','五甲','六甲'].map(k => '<option value="' + k + '">').join('')}</datalist>
+      <label for="fks">使用班級</label>
+      <select id="fks" required>
+        <option value="">請選擇班級</option>
+        ${KLASSES.map(k => `<option ${k === lastKlass ? 'selected' : ''}>${k}</option>`).join('')}
+        <option value="其他" ${otherKlass ? 'selected' : ''}>其他（自己輸入）</option>
+      </select>
+      <input id="fk" maxlength="10" placeholder="例如：棋藝社" value="${esc(otherKlass ? lastKlass : '')}" ${otherKlass ? '' : 'hidden'} style="margin-top:6px">
       <div class="err" id="ferr"></div>
       <div class="actions">
         <button type="button" class="btn" id="fx">取消</button>
@@ -236,9 +243,17 @@ function openBook() {
     </form>`;
   dlg.showModal();
   $('fx').onclick = () => dlg.close();
+  $('fks').onchange = () => {
+    const other = $('fks').value === '其他';
+    $('fk').hidden = !other; $('fk').required = other;
+    if (other) $('fk').focus();
+  };
+  $('fk').required = !$('fk').hidden;
   $('f').onsubmit = async e => {
     e.preventDefault();
-    const name = $('fn').value.trim(), klass = $('fk').value.trim(); if (!name || !klass) return;
+    const name = $('fn').value.trim();
+    const klass = $('fks').value === '其他' ? $('fk').value.trim() : $('fks').value;
+    if (!name || !klass) return;
     $('fs').disabled = true; $('fs').textContent = '送出中…'; $('ferr').textContent = '';
     try {
       const r = await book({ name, klass, slots });

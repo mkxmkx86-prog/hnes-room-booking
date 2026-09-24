@@ -1,13 +1,13 @@
 // 管理頁：用帳號密碼登入後才能用
-import { app, db } from './firebase.js?v=20260924c';
+import { app, db } from './firebase.js?v=20260924d';
 import {
   getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
   doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs, writeBatch, serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { addDays, today, wd, DAYC, mdw, esc, parseTimetable, htmlTableToTSV } from './shared.js?v=20260924c';
-import { INITIAL_TERM, INITIAL_ROOMS, INITIAL_ENTRIES } from './initial-data.js?v=20260924c';
+import { addDays, today, wd, DAYC, mdw, esc, parseTimetable, htmlTableToTSV } from './shared.js?v=20260924d';
+import { INITIAL_TERM, INITIAL_ROOMS, INITIAL_ENTRIES } from './initial-data.js?v=20260924d';
 
 const auth = getAuth(app);
 const $ = id => document.getElementById(id);
