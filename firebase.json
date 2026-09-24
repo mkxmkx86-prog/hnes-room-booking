@@ -7,10 +7,7 @@
   },
   "auth": {
     "providers": {
-      "googleSignIn": {
-        "oAuthBrandDisplayName": "華南教室預約",
-        "supportEmail": "mkx.mkx86@gmail.com"
-      }
+      "emailPassword": true
     }
   }
 }

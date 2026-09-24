@@ -1,7 +1,7 @@
-// 管理頁：Google 登入後才能用
+// 管理頁：用帳號密碼登入後才能用
 import { app, db } from './firebase.js';
 import {
-  getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut,
+  getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
   doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs, writeBatch, serverTimestamp,
@@ -15,10 +15,26 @@ const CONFIG = doc(db, 'config', 'main');
 let cfg = { rooms: [], periods: 7, terms: [] };
 
 // ====== 登入 ======
-$('loginBtn').onclick = async () => {
+const LOGIN_ERRORS = {
+  'auth/invalid-credential': '帳號或密碼錯誤',
+  'auth/invalid-email': 'Email 格式不對',
+  'auth/too-many-requests': '嘗試太多次了，請過幾分鐘再試',
+};
+$('loginForm').onsubmit = async e => {
+  e.preventDefault();
   $('loginErr').textContent = '';
-  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
-  catch (e) { $('loginErr').textContent = '登入失敗：' + e.message; }
+  $('loginBtn').disabled = true;
+  try { await signInWithEmailAndPassword(auth, $('loginEmail').value.trim(), $('loginPw').value); }
+  catch (err) { $('loginErr').textContent = '登入失敗：' + (LOGIN_ERRORS[err.code] || err.message); }
+  $('loginBtn').disabled = false;
+};
+$('forgot').onclick = async () => {
+  const email = $('loginEmail').value.trim();
+  if (!email) { $('loginErr').textContent = '請先在上面填入帳號（Email），再按「忘記密碼」'; return; }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    $('loginErr').textContent = '如果這是管理者帳號，重設密碼的信已寄到 ' + email + '，請去收信。';
+  } catch (err) { $('loginErr').textContent = '寄送失敗：' + (LOGIN_ERRORS[err.code] || err.message); }
 };
 
 onAuthStateChanged(auth, async user => {
@@ -26,18 +42,17 @@ onAuthStateChanged(auth, async user => {
   $('main').hidden = true;
   $('login').hidden = !!user;
   if (!user) return;
-  $('who').innerHTML = `<span>${esc(user.email)}</span><button class="btn sm" id="logout">登出</button>`;
-  $('logout').onclick = () => signOut(auth);
   try {
-    const me = await getDoc(doc(db, 'admins', user.email));
+    const me = await getDoc(doc(db, 'admins', user.uid));
     if (!me.exists()) throw new Error();
   } catch (e) {
-    $('login').hidden = false;
-    $('loginBtn').hidden = true;
-    $('loginErr').textContent = '「' + user.email + '」不是管理者帳號，請換一個帳號登入。';
+    await signOut(auth);
+    $('loginErr').textContent = '「' + user.email + '」沒有管理權限。';
     return;
   }
-  $('login').hidden = true;
+  $('who').innerHTML = `<span>${esc(user.email)}</span><button class="btn sm" id="logout">登出</button>`;
+  $('logout').onclick = () => signOut(auth);
+  $('loginPw').value = '';
   $('main').hidden = false;
   await loadConfig();
   loadRecords();

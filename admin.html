@@ -81,9 +81,16 @@ tr.off td{color:var(--muted);text-decoration:line-through}
     <div class="who" id="who"></div>
   </header>
 
-  <div class="card center" id="login" hidden>
-    <p>請用管理者的 Google 帳號登入</p>
-    <button class="btn primary" id="loginBtn">用 Google 登入</button>
+  <div class="card" id="login" hidden style="max-width:380px;margin:40px auto 0">
+    <h3>管理者登入</h3>
+    <form id="loginForm">
+      <label>帳號（Email）<input id="loginEmail" type="email" autocomplete="username" required></label>
+      <label style="margin-top:10px">密碼<input id="loginPw" type="password" autocomplete="current-password" required></label>
+      <div class="actions" style="justify-content:space-between;align-items:center">
+        <button type="button" class="btn sm" id="forgot" style="border:0;color:var(--accent)">忘記密碼</button>
+        <button class="btn primary" id="loginBtn">登入</button>
+      </div>
+    </form>
     <div class="msg err" id="loginErr"></div>
   </div>
 

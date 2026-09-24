@@ -2,14 +2,14 @@ rules_version = '2';
 
 // 華南實驗國小｜科任教室預約系統 安全規則
 // - 老師不用登入：可以看課表、新增預約、用自己的姓名取消預約
-// - 管理者（admins 集合裡的 Email，用 Google 登入）：可以改教室、學期、課表，也能取消任何預約
+// - 管理者（用帳號密碼登入，且 admins 集合裡有他的使用者 UID）：可以改教室、學期、課表，也能取消任何預約
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // 用 UID 認定管理者：別人就算用同一個 Email 註冊，UID 也不同，拿不到權限
     function isAdmin() {
       return request.auth != null
-        && request.auth.token.email_verified == true
-        && exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     function shortText(v, min, max) {
@@ -70,7 +70,7 @@ service cloud.firestore {
     }
 
     // 管理者名單：只有管理者自己能看
-    match /admins/{email} {
+    match /admins/{uid} {
       allow read: if isAdmin();
       allow write: if false;
     }
