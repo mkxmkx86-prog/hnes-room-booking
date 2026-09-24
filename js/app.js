@@ -133,8 +133,8 @@ function updateSel() {
 }
 
 // ====== 寫入 ======
-async function book({ name, klass, purpose, slots }) {
-  name = name.trim().slice(0, 20); klass = klass.trim().slice(0, 10); purpose = purpose.trim().slice(0, 30);
+async function book({ name, klass, slots }) {
+  name = name.trim().slice(0, 20); klass = klass.trim().slice(0, 10);
   if (!name) throw new Error('請填寫預約老師姓名');
   if (!klass) throw new Error('請填寫使用班級');
   const t0 = today(), bad = [];
@@ -154,13 +154,13 @@ async function book({ name, klass, purpose, slots }) {
   const batch = writeBatch(db), batchId = Math.random().toString(36).slice(2, 10);
   slots.forEach(v => {
     batch.set(doc(db, 'bookings', slotId(v.date, v.period, v.room)),
-      { date: v.date, period: v.period, room: v.room, name, klass, purpose, batch: batchId, status: '有效', createdAt: serverTimestamp() });
+      { date: v.date, period: v.period, room: v.room, name, klass, purpose: '', batch: batchId, status: '有效', createdAt: serverTimestamp() });
     batch.set(doc(collection(db, 'logs')),
-      { action: '預約', date: v.date, period: v.period, room: v.room, name, klass, purpose, at: serverTimestamp() });
+      { action: '預約', date: v.date, period: v.period, room: v.room, name, klass, purpose: '', at: serverTimestamp() });
   });
   try { await batch.commit(); }
   catch (e) { throw new Error(e.code === 'permission-denied' ? '有時段剛剛被別人預約走了，請看一下課表再選一次' : '預約失敗：' + e.message); }
-  return { message: bookMessage(klass, purpose, slots) };
+  return { message: bookMessage(klass, slots) };
 }
 
 async function myBookings(name) {
@@ -228,8 +228,6 @@ function openBook() {
       <label for="fk">使用班級</label>
       <input id="fk" required maxlength="10" list="klasses" placeholder="例如：五甲" value="${esc(getPref(KLASS_KEY))}">
       <datalist id="klasses">${['一甲','二甲','三甲','四甲','五甲','六甲'].map(k => '<option value="' + k + '">').join('')}</datalist>
-      <label for="fp">用途（選填）</label>
-      <input id="fp" maxlength="30" placeholder="例如：自然實驗">
       <div class="err" id="ferr"></div>
       <div class="actions">
         <button type="button" class="btn" id="fx">取消</button>
@@ -243,7 +241,7 @@ function openBook() {
     const name = $('fn').value.trim(), klass = $('fk').value.trim(); if (!name || !klass) return;
     $('fs').disabled = true; $('fs').textContent = '送出中…'; $('ferr').textContent = '';
     try {
-      const r = await book({ name, klass, purpose: $('fp').value, slots });
+      const r = await book({ name, klass, slots });
       setPref(NAME_KEY, name); setPref(KLASS_KEY, klass); S.sel.clear();
       showResult('預約完成', r); render();
     } catch (err) {
@@ -263,7 +261,6 @@ function openDetail(b) {
       <dt>時間</dt><dd>${mdw(b.date)}第 ${b.period} 節</dd>
       <dt>使用班級</dt><dd>${esc(b.klass)}</dd>
       <dt>預約老師</dt><dd>${esc(b.name)}</dd>
-      <dt>用途</dt><dd>${esc(b.purpose || '—')}</dd>
     </dl>
     ${past ? '<div class="actions"><button type="button" class="btn" id="cx">關閉</button></div>' : `<form id="c">
       <label for="cn">要取消這一節，請輸入預約老師姓名</label>
@@ -317,7 +314,7 @@ function openMine(name) {
       let h = '', last = '';
       list.forEach(b => {
         if (b.date !== last) { h += `<div class="mine-day">${mdw(b.date)}</div>`; last = b.date; }
-        h += `<label class="mine-item"><input type="checkbox" value="${esc(b.id)}">${esc(b.room)}　第 ${b.period} 節<small>${esc(b.klass)}${b.purpose ? '・' + esc(b.purpose) : ''}</small></label>`;
+        h += `<label class="mine-item"><input type="checkbox" value="${esc(b.id)}">${esc(b.room)}　第 ${b.period} 節<small>${esc(b.klass)}</small></label>`;
       });
       $('ml').innerHTML = `<div class="sel-tools"><span>共 ${list.length} 節，勾選要取消的</span><button type="button" class="link-btn" id="mall">全選</button></div><div style="margin-top:8px">${h}</div>`;
       $('mall').onclick = () => {
@@ -342,15 +339,13 @@ function openMine(name) {
 }
 
 function showResult(title, r) {
-  const share = 'https://line.me/R/share?text=' + encodeURIComponent(r.message);
   dlgBody.innerHTML = `
     <h2>${esc(title)}</h2>
-    <p class="status" style="margin-top:0">還差一步：把下面的訊息傳到老師 LINE 群組，讓大家知道。</p>
+    <p class="status" style="margin-top:0">可以複製下面的訊息，貼到老師 LINE 群組讓大家知道。</p>
     <div class="line-preview"><div class="bubble">${esc(r.message)}</div></div>
-    <a class="btn line" href="${share}" target="_blank" rel="noopener">分享到 LINE 群組</a>
     <div class="actions">
-      <button type="button" class="btn" id="rc">複製訊息</button>
       <button type="button" class="btn" id="rx">完成</button>
+      <button type="button" class="btn primary" id="rc">複製訊息</button>
     </div>`;
   if (!dlg.open) dlg.showModal();
   $('rx').onclick = () => dlg.close();

@@ -36,20 +36,20 @@ function whenText(date, periods) {
   const half = ps.every(p => p <= 4) ? '上午' : ps.every(p => p >= 5) ? '下午' : '';
   return head + half + '第 ' + ps.join('、') + ' 節';
 }
-function groupLines(slots, verb, klass, purpose) {
+function groupLines(slots, verb, klass) {
   const g = {};
   slots.forEach(v => { const k = v.date + '|' + v.room; (g[k] = g[k] || []).push(Number(v.period)); });
   return Object.keys(g).sort().map(k => {
     const [date, room] = k.split('|');
-    return whenText(date, g[k]) + ' ' + klass + verb + room + (purpose ? '（' + purpose + '）' : '');
+    return whenText(date, g[k]) + ' ' + klass + verb + room;
   }).join('\n');
 }
-export function bookMessage(klass, purpose, slots) {
-  return groupLines(slots, '會使用', klass, purpose) + '\n如需要使用的班級  可以提出討論喔..\n感謝!!';
+export function bookMessage(klass, slots) {
+  return groupLines(slots, '會使用', klass) + '\n如需要使用的班級  可以提出討論喔..\n感謝!!';
 }
 export function cancelMessage(list) {
   const ks = [...new Set(list.map(b => b.klass))];
-  const lines = ks.map(k => groupLines(list.filter(b => b.klass === k), '使用', k, '')).join('\n');
+  const lines = ks.map(k => groupLines(list.filter(b => b.klass === k), '使用', k)).join('\n');
   return (lines.includes('\n') ? '以下原訂的教室使用取消了：\n' + lines : '原訂 ' + lines + ' 取消了') + '\n需要的班級可以預約喔..\n感謝!!';
 }
 

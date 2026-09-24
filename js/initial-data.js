@@ -2,7 +2,7 @@
 import { expandLabel } from './shared.js';
 
 export const INITIAL_TERM = { name: '115學年度上學期', start: '2026-08-01', end: '2027-01-31' };
-export const INITIAL_ROOMS = ['山野教室', '電腦教室', '共讀站', '多媒體教室', '想法放大室'];
+export const INITIAL_ROOMS = ['想法放大室', '共讀站', '多媒體教室', '電腦教室', '山野教室']; // 依使用率排序
 
 const RAW = { // 格式：星期-節次:課程簡稱
   '電腦教室': '3-5:樂高社 3-6:樂高社 3-7:樂高社',

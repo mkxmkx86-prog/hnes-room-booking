@@ -108,8 +108,8 @@ function renderRecords() {
   const list = records.filter(b => $('rAll').checked || b.status === '有效');
   if (!list.length) { $('rTbl').innerHTML = '<p class="hint" style="padding:10px;margin:0">這段期間沒有預約</p>'; return; }
   const t0 = today();
-  $('rTbl').innerHTML = '<table><thead><tr><th>日期</th><th>節</th><th>教室</th><th>班級</th><th>預約老師</th><th>用途</th><th>狀態</th><th></th></tr></thead><tbody>' +
-    list.map(b => `<tr class="${b.status === '有效' ? '' : 'off'}"><td>${mdw(b.date)}</td><td>${b.period}</td><td>${esc(b.room)}</td><td>${esc(b.klass)}</td><td>${esc(b.name)}</td><td>${esc(b.purpose || '')}</td><td>${esc(b.status)}</td>` +
+  $('rTbl').innerHTML = '<table><thead><tr><th>日期</th><th>節</th><th>教室</th><th>班級</th><th>預約老師</th><th>狀態</th><th></th></tr></thead><tbody>' +
+    list.map(b => `<tr class="${b.status === '有效' ? '' : 'off'}"><td>${mdw(b.date)}</td><td>${b.period}</td><td>${esc(b.room)}</td><td>${esc(b.klass)}</td><td>${esc(b.name)}</td><td>${esc(b.status)}</td>` +
       `<td>${b.status === '有效' && b.date >= t0 ? `<button class="btn sm danger" data-cancel="${esc(b.id)}">取消</button>` : ''}</td></tr>`).join('') +
     '</tbody></table>';
 }
@@ -131,8 +131,8 @@ $('rTbl').onclick = async e => {
 $('rCsv').onclick = () => {
   const list = records.filter(b => $('rAll').checked || b.status === '有效');
   const cell = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const rows = [['日期', '星期', '節次', '教室', '使用班級', '預約老師', '用途', '狀態']]
-    .concat(list.map(b => [b.date, DAYC[wd(b.date)], b.period, b.room, b.klass, b.name, b.purpose || '', b.status]));
+  const rows = [['日期', '星期', '節次', '教室', '使用班級', '預約老師', '狀態']]
+    .concat(list.map(b => [b.date, DAYC[wd(b.date)], b.period, b.room, b.klass, b.name, b.status]));
   const blob = new Blob(['﻿' + rows.map(r => r.map(cell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -221,6 +221,8 @@ function renderSettings() {
     <div class="list-row">
       <label style="display:flex;gap:6px;align-items:center;color:var(--ink);font-size:14px" class="grow"><input type="checkbox" data-open="${i}" ${r.open !== false ? 'checked' : ''}>${esc(r.name)}</label>
       <span class="muted" style="font-size:12.5px">${r.open !== false ? '開放' : '暫停'}</span>
+      <button class="btn sm" data-move="${i}" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="上移">↑</button>
+      <button class="btn sm" data-move="${i}" data-dir="1" ${i === cfg.rooms.length - 1 ? 'disabled' : ''} aria-label="下移">↓</button>
       <button class="btn sm danger" data-delroom="${i}">刪除</button>
     </div>`).join('') || '<p class="hint">還沒有教室</p>';
   $('periods').value = cfg.periods || 7;
@@ -234,6 +236,12 @@ function renderSettings() {
 }
 let deletedTerms = [];
 $('roomList').onclick = e => {
+  const m = e.target.dataset.move;
+  if (m !== undefined) {
+    const i = Number(m), j = i + Number(e.target.dataset.dir);
+    [cfg.rooms[i], cfg.rooms[j]] = [cfg.rooms[j], cfg.rooms[i]];
+    renderSettings(); return;
+  }
   const i = e.target.dataset.delroom;
   if (i === undefined) return;
   if (!confirm(`確定要刪除「${cfg.rooms[i].name}」嗎？（只想暫停的話，取消勾選就好）`)) return;
