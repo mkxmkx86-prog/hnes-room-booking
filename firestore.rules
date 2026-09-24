@@ -1,0 +1,78 @@
+rules_version = '2';
+
+// 華南實驗國小｜科任教室預約系統 安全規則
+// - 老師不用登入：可以看課表、新增預約、用自己的姓名取消預約
+// - 管理者（admins 集合裡的 Email，用 Google 登入）：可以改教室、學期、課表，也能取消任何預約
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+
+    function shortText(v, min, max) {
+      return v is string && v.size() >= min && v.size() <= max;
+    }
+
+    // 預約文件的編號固定是「日期_節次_教室」，同一格只能有一筆，天生防止重複預約
+    function validBooking(id, d) {
+      return d.keys().hasOnly(['date', 'period', 'room', 'name', 'klass', 'purpose', 'batch', 'status', 'createdAt'])
+        && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.period is int && d.period >= 1 && d.period <= 12
+        && shortText(d.room, 1, 20)
+        && shortText(d.name, 1, 20)
+        && shortText(d.klass, 1, 10)
+        && shortText(d.purpose, 0, 30)
+        && shortText(d.batch, 1, 20)
+        && d.status == '有效'
+        && d.createdAt == request.time
+        && id == d.date + '_' + string(d.period) + '_' + d.room;
+    }
+
+    // 教室、學期、每天節數
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 各學期的固定課表
+    match /timetables/{term} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /bookings/{id} {
+      allow read: if true;
+      // 新預約
+      allow create: if validBooking(id, request.resource.data);
+      allow update: if
+        // 原本被取消的格子，可以重新預約
+        (resource.data.status == '已取消' && validBooking(id, request.resource.data))
+        // 本人取消：只能改狀態，而且輸入的姓名要和預約人一樣
+        || (resource.data.status == '有效'
+            && request.resource.data.status == '已取消'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'cancelledAt', 'cancelName'])
+            && request.resource.data.cancelName == resource.data.name
+            && request.resource.data.cancelledAt == request.time)
+        || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 預約／取消的歷史紀錄：任何人只能新增，只有管理者能看
+    match /logs/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['action', 'date', 'period', 'room', 'name', 'klass', 'purpose', 'at'])
+        && request.resource.data.action in ['預約', '取消', '管理者取消']
+        && shortText(request.resource.data.name, 1, 20)
+        && request.resource.data.at == request.time;
+      allow read: if isAdmin();
+    }
+
+    // 管理者名單：只有管理者自己能看
+    match /admins/{email} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+  }
+}

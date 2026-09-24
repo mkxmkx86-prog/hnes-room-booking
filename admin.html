@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>教室預約管理</title>
+<meta name="robots" content="noindex">
+<style>
+:root{
+  --bg:#f6f5f1; --surface:#fff; --head:#faf9f6; --ink:#1f2328; --muted:#6b7078;
+  --line:#e3e1da; --line-strong:#c9c6bc;
+  --accent:#1f6f5c; --accent-ink:#fff; --accent-soft:#e2f0ea;
+  --fixed:#edebe5; --danger:#b3261e; --danger-soft:#fbe9e7; --warn-bg:#fff7e0; --warn-ink:#6b4e00;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#16181b; --surface:#1f2226; --head:#23272b; --ink:#e8e9ea; --muted:#9aa0a6;
+  --line:#33373c; --line-strong:#4a4f55;
+  --accent:#5cc3a4; --accent-ink:#0f1a16; --accent-soft:#1e3a32;
+  --fixed:#2a2d31; --danger:#ff8a80; --danger-soft:#3b1f1d; --warn-bg:#352c12; --warn-ink:#f1d98a;
+}}
+:root[data-theme="dark"]{
+  --bg:#16181b; --surface:#1f2226; --head:#23272b; --ink:#e8e9ea; --muted:#9aa0a6;
+  --line:#33373c; --line-strong:#4a4f55;
+  --accent:#5cc3a4; --accent-ink:#0f1a16; --accent-soft:#1e3a32;
+  --fixed:#2a2d31; --danger:#ff8a80; --danger-soft:#3b1f1d; --warn-bg:#352c12; --warn-ink:#f1d98a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 system-ui,-apple-system,"Segoe UI","Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font-size:21px}
+header p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.who{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:14px}
+.tabs{display:flex;gap:4px;margin-top:18px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{border:0;background:none;padding:9px 14px;font:inherit;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+h3{margin:0 0 8px;font-size:15px}
+h3 .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:12px;margin-right:6px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.row>label{flex:1;min-width:150px}
+label{display:block;font-size:12.5px;color:var(--muted)}
+input,textarea,select{width:100%;margin-top:3px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:8px;font:inherit;color:var(--ink);background:var(--surface)}
+input[type="checkbox"]{width:18px;height:18px;margin:0;accent-color:var(--accent)}
+textarea{height:120px;font-size:12px;font-family:ui-monospace,Consolas,monospace;resize:vertical}
+.hint{color:var(--muted);font-size:12.5px;margin:4px 0 8px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;padding:8px 16px;font:inherit;cursor:pointer;white-space:nowrap}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.danger{color:var(--danger);border-color:var(--danger)}
+.btn.sm{padding:4px 10px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:default}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.msg{margin-top:10px;padding:9px 12px;border-radius:8px;font-size:13px;white-space:pre-line}
+.msg.err{background:var(--danger-soft);color:var(--danger)}
+.msg.ok{background:var(--accent-soft);color:var(--accent)}
+.msg.warn{background:var(--warn-bg);color:var(--warn-ink)}
+.msg:empty{display:none}
+.tbl{overflow:auto;border:1px solid var(--line);border-radius:10px;max-height:460px;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;white-space:nowrap}
+thead th{background:var(--head);position:sticky;top:0;font-weight:600;font-size:12.5px;color:var(--muted)}
+.pv th,.pv td{border:1px solid var(--line);text-align:center;font-size:12px;padding:4px 6px}
+.pv td.f{background:var(--fixed)}
+tr.off td{color:var(--muted);text-decoration:line-through}
+.center{text-align:center;padding:40px 16px}
+.list-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.list-row:last-child{border-bottom:0}
+.list-row .grow{flex:1}
+.list-row input[type="date"]{width:auto}
+.muted{color:var(--muted)}
+[hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>教室預約管理</h1>
+      <p>華南實驗國小科任教室預約系統　<a href="./">回預約頁</a></p>
+    </div>
+    <div class="who" id="who"></div>
+  </header>
+
+  <div class="card center" id="login" hidden>
+    <p>請用管理者的 Google 帳號登入</p>
+    <button class="btn primary" id="loginBtn">用 Google 登入</button>
+    <div class="msg err" id="loginErr"></div>
+  </div>
+
+  <div id="main" hidden>
+    <div class="card" id="setup" hidden style="background:var(--warn-bg);color:var(--warn-ink)">
+      <b>第一次使用</b>：資料庫還是空的。按下面的按鈕，會建立 5 間科任教室和 115 學年度上學期的固定課表（53 節）。
+      <div class="actions" style="justify-content:flex-start"><button class="btn primary" id="setupBtn">建立初始資料</button></div>
+      <div class="msg err" id="setupErr"></div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="records" aria-selected="true">預約紀錄</button>
+      <button role="tab" data-tab="import" aria-selected="false">匯入新學期課表</button>
+      <button role="tab" data-tab="settings" aria-selected="false">教室與學期</button>
+    </div>
+
+    <!-- 預約紀錄 -->
+    <section class="card" data-panel="records">
+      <div class="row">
+        <label>從<input type="date" id="rFrom"></label>
+        <label>到<input type="date" id="rTo"></label>
+        <label style="flex:0 0 auto;display:flex;gap:6px;align-items:center;padding-bottom:9px"><input type="checkbox" id="rAll">顯示已取消</label>
+        <button class="btn primary" id="rGo">查詢</button>
+        <button class="btn" id="rCsv">下載 CSV</button>
+      </div>
+      <div class="msg" id="rMsg"></div>
+      <div class="tbl" id="rTbl"></div>
+    </section>
+
+    <!-- 匯入課表 -->
+    <section class="card" data-panel="import" hidden>
+      <h3><span class="n">1</span>學期資料</h3>
+      <div class="row">
+        <label>學期名稱<input id="tn" placeholder="例如：115學年度下學期"></label>
+        <label>開始日<input id="ts" type="date"></label>
+        <label>結束日<input id="te" type="date"></label>
+      </div>
+      <p class="hint">日期抓寬一點就好，例如下學期填 2/1～7/31，只要不和其他學期重疊。填已經有的學期名稱，會整個覆蓋那個學期的課表。</p>
+
+      <h3 style="margin-top:18px"><span class="n">2</span>貼上課表</h3>
+      <p class="hint">打開 Word 課表，把整個表格選起來（包含第一列的教室名稱）按 Ctrl+C，再到下面按 Ctrl+V。課程可以用簡稱，例如「六自」會自動變成「六甲自然」。</p>
+      <textarea id="tx" placeholder="在這裡貼上課表…"></textarea>
+      <div class="msg" id="pmsg"></div>
+
+      <h3 style="margin-top:18px"><span class="n">3</span>確認內容</h3>
+      <div class="tbl pv" id="pv"><p class="hint" style="padding:10px;margin:0">貼上課表後，這裡會顯示讀到的內容。</p></div>
+
+      <div class="msg" id="imsg"></div>
+      <div class="actions"><button class="btn primary" id="go" disabled>匯入這個學期</button></div>
+    </section>
+
+    <!-- 教室與學期 -->
+    <section class="card" data-panel="settings" hidden>
+      <h3>教室</h3>
+      <p class="hint">取消勾選「開放」，預約頁就不會出現這間教室（例如整修時）。</p>
+      <div id="roomList"></div>
+      <div class="row" style="margin-top:8px">
+        <label>新增教室<input id="newRoom" maxlength="20" placeholder="教室名稱"></label>
+        <button class="btn" id="addRoom">新增</button>
+      </div>
+
+      <h3 style="margin-top:22px">每天節數</h3>
+      <div class="row"><label style="max-width:160px"><input type="number" id="periods" min="1" max="12"></label></div>
+
+      <h3 style="margin-top:22px">學期</h3>
+      <p class="hint">不在任何學期日期裡的日子不能預約。刪除學期會一起刪掉那個學期的固定課表。</p>
+      <div id="termList"></div>
+
+      <div class="msg" id="smsg"></div>
+      <div class="actions"><button class="btn primary" id="saveSettings">儲存</button></div>
+    </section>
+  </div>
+</div>
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>

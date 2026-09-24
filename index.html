@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>科任教室預約</title>
+<meta name="description" content="華南實驗國小科任教室查詢與預約">
+<style>
+:root{
+  --bg:#f6f5f1; --surface:#fff; --head:#faf9f6; --ink:#1f2328; --muted:#6b7078;
+  --line:#e3e1da; --line-strong:#c9c6bc;
+  --accent:#1f6f5c; --accent-ink:#fff; --accent-soft:#e2f0ea;
+  --fixed:#edebe5; --fixed-ink:#555a61;
+  --booked:#fff2d6; --booked-ink:#7a4a00; --booked-line:#e9b44c;
+  --hatch:#e6e4dd; --danger:#b3261e; --danger-soft:#fbe9e7;
+  --note-bg:#fff7e0; --note-ink:#6b4e00;
+  --bubble:#d9f6c4; --bubble-ink:#1f2328; --line-bg:#8ca9c8;
+  --shadow:0 8px 28px rgba(0,0,0,.14);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#16181b; --surface:#1f2226; --head:#23272b; --ink:#e8e9ea; --muted:#9aa0a6;
+  --line:#33373c; --line-strong:#4a4f55;
+  --accent:#5cc3a4; --accent-ink:#0f1a16; --accent-soft:#1e3a32;
+  --fixed:#2a2d31; --fixed-ink:#b4b8bd;
+  --booked:#3a2f17; --booked-ink:#f3cf85; --booked-line:#c89533;
+  --hatch:#2a2d31; --danger:#ff8a80; --danger-soft:#3b1f1d;
+  --note-bg:#352c12; --note-ink:#f1d98a;
+  --bubble:#3d5a2c; --bubble-ink:#eef5e8; --line-bg:#2c3a4a;
+  --shadow:0 8px 28px rgba(0,0,0,.5);
+}}
+:root[data-theme="dark"]{
+  --bg:#16181b; --surface:#1f2226; --head:#23272b; --ink:#e8e9ea; --muted:#9aa0a6;
+  --line:#33373c; --line-strong:#4a4f55;
+  --accent:#5cc3a4; --accent-ink:#0f1a16; --accent-soft:#1e3a32;
+  --fixed:#2a2d31; --fixed-ink:#b4b8bd;
+  --booked:#3a2f17; --booked-ink:#f3cf85; --booked-line:#c89533;
+  --hatch:#2a2d31; --danger:#ff8a80; --danger-soft:#3b1f1d;
+  --note-bg:#352c12; --note-ink:#f1d98a;
+  --bubble:#3d5a2c; --bubble-ink:#eef5e8; --line-bg:#2c3a4a;
+  --shadow:0 8px 28px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI","Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 120px}
+header h1{font-size:22px;margin:0;letter-spacing:.02em}
+header p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.demo{margin:14px 0 0;padding:10px 12px;border-radius:10px;background:var(--note-bg);color:var(--note-ink);font-size:13px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:18px 0 10px}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:7px;font:inherit;font-size:14px;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.week{display:flex;align-items:center;gap:4px}
+.icon-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:18px;cursor:pointer;line-height:1}
+.week .lbl{min-width:118px;text-align:center;font-variant-numeric:tabular-nums;font-weight:600;font-size:14px}
+.link-btn{border:0;background:none;color:var(--accent);font:inherit;font-size:13px;cursor:pointer;padding:4px 6px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink)}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+.grid{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
+.grid.loading::after{content:"載入中…";position:absolute;inset:0;display:grid;place-items:center;background:color-mix(in srgb,var(--surface) 70%,transparent);color:var(--muted)}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th,td{border-top:1px solid var(--line);border-left:1px solid var(--line);padding:0}
+tr>*:first-child{border-left:0}
+thead th{border-top:0;padding:8px 2px;font-size:13px;font-weight:600;background:var(--head)}
+thead th small{display:block;font-weight:400;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+thead th.today,thead th.today small{color:var(--accent)}
+.pcol{width:58px}
+tbody th{font-size:13px;font-weight:600;background:var(--head)}
+tbody th small{display:block;color:var(--muted);font-size:10.5px;font-weight:400;font-variant-numeric:tabular-nums}
+.cell{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:58px;padding:4px 3px;border:0;background:none;font:inherit;color:inherit;text-align:center;font-size:13px;line-height:1.3;overflow:hidden}
+.cell .sm{font-size:11px;opacity:.8;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell .lb{max-width:100%;overflow:hidden;text-overflow:ellipsis;word-break:break-all}
+.free{cursor:pointer}
+.free .plus{color:var(--line-strong);font-size:18px;line-height:1}
+.free:hover{background:var(--accent-soft)}
+.free:hover .plus{color:var(--accent)}
+.free[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.free[aria-pressed="true"] .plus{color:var(--accent-ink)}
+.fixed{background:var(--fixed);color:var(--fixed-ink)}
+.booked{background:var(--booked);color:var(--booked-ink);cursor:pointer;box-shadow:inset 3px 0 0 var(--booked-line)}
+.booked .lb{font-weight:600}
+.closed{background:repeating-linear-gradient(135deg,transparent 0 6px,var(--hatch) 6px 7px)}
+.cell:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:12px 2px 0;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:14px;border-radius:4px;border:1px solid var(--line);display:inline-block}
+.selbar{position:fixed;left:50%;bottom:16px;transform:translate(-50%,140%);transition:transform .2s;width:min(560px,calc(100% - 32px));
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:10px 10px 10px 16px;display:flex;align-items:center;gap:8px}
+.selbar.show{transform:translate(-50%,0)}
+.selbar .n{flex:1;font-size:14px}
+.selbar b{color:var(--accent);font-size:17px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 14px;font:inherit;font-size:14px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff;font-weight:600}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.line{display:block;margin-top:14px;text-align:center;text-decoration:none;background:#06c755;border-color:#06c755;color:#fff;font-weight:600;padding:11px 14px;font-size:15px}
+dialog{border:0;border-radius:16px;padding:0;width:min(440px,calc(100% - 32px));background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+.dlg{padding:20px}
+.dlg h2{margin:0 0 12px;font-size:18px}
+.slots{margin:0 0 14px;padding:10px 12px;background:var(--head);border-radius:10px;font-size:14px;list-style:none}
+.slots li+li{margin-top:4px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input{width:100%;padding:9px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--surface);color:var(--ink);font:inherit;font-size:15px}
+input:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.err{margin-top:10px;padding:8px 10px;border-radius:8px;background:var(--danger-soft);color:var(--danger);font-size:13px;white-space:pre-line}
+.err:empty{display:none}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:14px}
+dt{color:var(--muted)}
+dd{margin:0}
+.line-preview{margin-top:12px;background:var(--line-bg);border-radius:12px;padding:12px}
+.line-preview .who{font-size:11px;color:#fff;opacity:.9;margin-bottom:4px}
+.bubble{background:var(--bubble);color:var(--bubble-ink);border-radius:4px 14px 14px 14px;padding:9px 12px;font-size:14px;white-space:pre-line;max-width:92%}
+.status{font-size:13px;color:var(--muted);margin-top:8px}
+.toast{position:fixed;left:50%;top:16px;transform:translate(-50%,-160%);transition:transform .2s;background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:14px;max-width:calc(100% - 32px);z-index:10}
+.toast.show{transform:translate(-50%,0)}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header .demo{flex-basis:100%}
+.mine-btn{border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:10px;padding:7px 14px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.mine-q{display:flex;gap:8px;align-items:flex-end}
+.mine-q>div{flex:1}
+.mine-list{margin-top:14px;max-height:50vh;overflow:auto}
+.mine-day{font-size:13px;color:var(--muted);font-weight:600;margin:12px 0 4px}
+.mine-day:first-child{margin-top:0}
+.mine-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:14px}
+.mine-item+.mine-item{margin-top:6px}
+.mine-item input{width:18px;height:18px;margin:0;accent-color:var(--danger);flex:none}
+.mine-item:has(input:checked){border-color:var(--danger);background:var(--danger-soft)}
+.mine-item small{color:var(--muted);margin-left:auto;font-size:12px}
+.empty{color:var(--muted);font-size:14px;text-align:center;padding:18px 0}
+.sel-tools{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:13px;color:var(--muted)}
+@media (max-width:560px){
+  header h1{font-size:19px}
+  .pcol{width:44px}
+  tbody th small{display:none}
+  .cell{min-height:52px;font-size:12px}
+  .cell .sm{display:none}
+  thead th{font-size:12px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>科任教室預約</h1>
+      <p>華南實驗國小　<span id="termLbl"></span></p>
+    </div>
+    <button type="button" class="mine-btn" id="mineBtn">我的預約／取消</button>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="檢視方式">
+      <button type="button" data-view="room" aria-pressed="true">依教室看一週</button>
+      <button type="button" data-view="day" aria-pressed="false">依日期看全部教室</button>
+    </div>
+    <div class="week">
+      <button type="button" class="icon-btn" id="prev" aria-label="上一週">‹</button>
+      <span class="lbl" id="weekLbl"></span>
+      <button type="button" class="icon-btn" id="next" aria-label="下一週">›</button>
+      <button type="button" class="link-btn" id="thisWeek">回本週</button>
+    </div>
+  </div>
+
+  <div class="chips" id="chips"></div>
+  <div class="grid loading" id="grid"></div>
+
+  <div class="legend">
+    <span><i style="background:var(--surface)"></i>空堂，可預約</span>
+    <span><i style="background:var(--booked);border-color:var(--booked-line)"></i>已預約（點一下看詳細或取消）</span>
+    <span><i style="background:var(--fixed)"></i>固定課表</span>
+    <span><i class="closed"></i>已過或非上課期間</span>
+  </div>
+</div>
+
+<div class="selbar" id="selbar" aria-live="polite">
+  <span class="n">已選 <b id="selN">0</b> 節</span>
+  <button type="button" class="btn" id="selClear">清除</button>
+  <button type="button" class="btn primary" id="selGo">預約</button>
+</div>
+
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
