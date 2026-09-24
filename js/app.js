@@ -1,11 +1,11 @@
 // 老師用的預約網頁
-import { db } from './firebase.js';
+import { db } from './firebase.js?v=20260924c';
 import {
   doc, getDoc, collection, query, where, onSnapshot, getDocs, writeBatch, serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import {
   ymd, addDays, wd, DAYC, md, mdw, mondayOf, today, esc, termOf, slotId, slotsSummary, bookMessage, cancelMessage,
-} from './shared.js';
+} from './shared.js?v=20260924c';
 
 // ====== 資料 ======
 const cfg = { rooms: [], periods: 7, terms: [] };
